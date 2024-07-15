@@ -1,3 +1,103 @@
-One code sample I’m particularly proud of is my Weather Monitoring System project hosted on GitHub. This project involves creating an IoT-based real-time weather monitoring system using a variety of sensors (temperature, humidity, pressure, etc.) connected to a Raspberry Pi. The data is processed and sent to a cloud server where it is stored and visualized using a web application.
+#include <SFE_BMP180.h>
+#include <Wire.h>
+#include <ESP8266WiFi.h>
+#include "DHT.h"
 
-I'm proud of this project because it demonstrates my ability to integrate hardware and software components, handle real-time data processing, and develop a user-friendly interface. The project also includes a comprehensive README file that explains the setup, components used, and instructions on how to replicate the project.
+String apiKey = "3YHS4ZL024XQ5DUA";
+const char *ssid =  "Putin7";
+const char *pass =  "123456789";
+const char* server = "api.thingspeak.com";
+
+
+DHT dht(D3, DHT11);
+SFE_BMP180 bmp;
+double T, P;
+char status;
+WiFiClient client;
+
+
+void setup() {
+  Serial.begin(115200);
+  delay(10);
+  bmp.begin();
+  Wire.begin();
+  dht.begin();
+  WiFi.begin(ssid, pass);
+
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.println("WiFi connected");
+}
+
+void loop() {
+  //BMP180 sensor
+  status =  bmp.startTemperature();
+  if (status != 0) {
+    delay(status);
+    status = bmp.getTemperature(T);
+
+    status = bmp.startPressure(3);// 0 to 3
+    if (status != 0) {
+      delay(status);
+      status = bmp.getPressure(P, T);
+      if (status != 0) {
+
+      }
+    }
+  }
+
+  //DHT11 sensor
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  //Rain sensor
+  int r = analogRead(A0);
+  r = map(r, 0, 1024, 0, 100);
+
+
+  if (client.connect(server, 80)) {
+    String postStr = apiKey;
+    postStr += "&field1=";
+    postStr += String(t);
+    postStr += "&field2=";
+    postStr += String(h);
+    postStr += "&field3=";
+    postStr += String(P, 2);
+    postStr += "&field4=";
+    postStr += String(r);
+    postStr += "\r\n\r\n\r\n\r\n";
+
+    client.print("POST /update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(postStr.length());
+    client.print("\n\n\n\n");
+    client.print(postStr);
+
+    Serial.print("Temperature: ");
+    Serial.println(t);
+    Serial.print("Humidity: ");
+    Serial.println(h);
+    Serial.print("absolute pressure: ");
+    Serial.print(P, 2);
+    Serial.println("mb");
+    Serial.print("Rain");
+    Serial.println(r);
+
+  }
+  client.stop();
+  delay(1000);
+}
