@@ -1,1 +1,3 @@
-# putin1
+One code sample I’m particularly proud of is my Weather Monitoring System project hosted on GitHub. This project involves creating an IoT-based real-time weather monitoring system using a variety of sensors (temperature, humidity, pressure, etc.) connected to a Raspberry Pi. The data is processed and sent to a cloud server where it is stored and visualized using a web application.
+
+I'm proud of this project because it demonstrates my ability to integrate hardware and software components, handle real-time data processing, and develop a user-friendly interface. The project also includes a comprehensive README file that explains the setup, components used, and instructions on how to replicate the project.
